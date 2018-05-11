@@ -1,7 +1,7 @@
 # json-client
 
-A simple web client for JSON APIs using Guzzle and the 
-symfony serializer.
+A simple client for JSON APIs using Guzzle and the Symfony 
+Serializer.
 
 To implement a API client, you would extend AbstractApiClient 
 and write your methods, using the Guzzle Http Client to transmit.

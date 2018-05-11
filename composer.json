@@ -1,6 +1,6 @@
 {
     "name": "timostamm/json-client",
-    "description": "A simple web client for JSON APIs using Guzzle",
+    "description": "A simple client for JSON APIs using Guzzle and the Symfony Serializer.",
     "type": "library",
     "require": {
         "php": ">=7.1",
