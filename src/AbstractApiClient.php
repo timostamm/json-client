@@ -22,46 +22,65 @@ use TS\Web\JsonClient\Middleware\ServerMessageMiddleware;
 abstract class AbstractApiClient
 {
 
-    private $handlerStack;
     private $serializer;
     protected $http;
+    protected $defaults;
 
 
-    public function __construct(  SerializerInterface $serializer )
+    public function __construct(string $baseUri, SerializerInterface $serializer, callable $handler = null)
     {
         $this->serializer = $serializer;
-        $this->handlerStack = $this->createHandlerStack();
-        $this->http = $this->createClient($this->handlerStack);
+        $handlerStack = $this->createHandlerStack($handler);
+        $defaults = $this->defaults($baseUri, $handlerStack);
+        $config = $this->configure($defaults, $handlerStack);
+        $this->http = $this->createClient($config, $handlerStack);
     }
 
 
-    protected function createClient(HandlerStack $handlerStack):Client
+    protected function defaults(string $baseUri, HandlerStack $stack): array
     {
-        return new Client([
-            'handler' => $handlerStack,
-            'base_uri' => $this->getBaseUri(),
+        return [
+            'handler' => $stack,
+            'base_uri' => $baseUri,
             RequestOptions::ALLOW_REDIRECTS => false,
-            RequestOptions::TIMEOUT => $this->getDefaultTimeout(),
+            RequestOptions::TIMEOUT => 2.0,
             RequestOptions::VERIFY => true,
             RequestOptions::COOKIES => false,
             RequestOptions::HEADERS => [
-                'User-Agent' => $this->getUserAgent(),
                 'Accept-Encoding' => 'gzip',
                 'Accept' => 'application/json'
             ]
-        ]);
+        ];
     }
 
 
-    protected function createHandlerStack():HandlerStack
+    /**
+     * Configure the client, set config options and middleware.
+     *
+     * @param array $config
+     * @param HandlerStack $stack
+     * @return array
+     */
+    protected function configure(array & $config, HandlerStack $stack): array
     {
-        $stack = HandlerStack::create();
+    }
 
-        $stack->push(function(callable $handler) {
+
+    protected function createClient(array $config): Client
+    {
+        return new Client($config);
+    }
+
+
+    protected function createHandlerStack(callable $handler = null): HandlerStack
+    {
+        $stack = HandlerStack::create($handler);
+
+        $stack->push(function (callable $handler) {
             return new ServerMessageMiddleware($handler);
         }, 'error_message');
 
-        $stack->push(function(callable $handler) {
+        $stack->push(function (callable $handler) {
             return new SerializeRequestBodyMiddleware($handler, $this->serializer);
         }, 'serialize_request_body');
 
@@ -69,43 +88,48 @@ abstract class AbstractApiClient
     }
 
 
-    abstract protected function getBaseUri():string;
-
-
-    protected function getDefaultTimeout():float
+    /**
+     * Ensure that the response has the expected content type.
+     * If the expected type contains a charset, it must match.
+     * If the expected type does not contain a charset, the
+     * charset is ignored when matching the type.
+     *
+     * @param string $expectedType
+     * @param ResponseInterface $response
+     * @throw UnexpectedResponseException if the response content type does not match
+     */
+    protected function expectResponseType(string $expectedType, ResponseInterface $response): void
     {
-        return 2.0;
-    }
-
-
-    protected function getUserAgent():string
-    {
-        return 'AbstractApiClient';
-    }
-
-
-    protected function expectResponseType(string $type, ResponseInterface $response):void
-    {
-        $actual = $response->getHeaderLine('Content-Type');
-        if ($actual !== $type) {
-            $msg = sprintf('Expected response content type to be %s, got %s instead.', $type, $actual);
-            throw new UnexpectedResponseException($msg, $response);
+        $actualType = $response->getHeaderLine('Content-Type');
+        if ($actualType === $expectedType) {
+            return;
         }
+        $actualHasCharset = strpos($expectedType, ';charset=') !== false;
+        $typeHasCharset = strpos($expectedType, ';charset=') !== false;
+        if (!$typeHasCharset && $actualHasCharset) {
+            $actualStripped = explode(';charset=', $actualType)[0];
+            if ($actualStripped === $expectedType) {
+                return;
+            }
+        }
+        $msg = sprintf('Expected response content type to be %s, got %s instead.', $expectedType, $actualType);
+        throw new UnexpectedResponseException($msg, $response);
     }
 
 
     /**
+     * Deserialize the request body into the given type.
+     *
      * @param ResponseInterface $response
      * @param string $type
      * @param array $context
      * @return mixed
+     * @throws UnexpectedResponseException if the response is not application/json or deserialization failed
      */
-    protected function deserializeResponse(ResponseInterface $response, string $type, array $context=[])
+    protected function deserializeResponse(ResponseInterface $response, string $type, array $context = [])
     {
         $this->expectResponseType('application/json', $response);
-
         $data = $response->getBody()->getContents();
-
         try {
 
             $object = $this->serializer
