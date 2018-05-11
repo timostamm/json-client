@@ -31,13 +31,13 @@ abstract class AbstractApiClient
     {
         $this->serializer = $serializer;
         $handlerStack = $this->createHandlerStack($handler);
-        $defaults = $this->defaults($baseUri, $handlerStack);
-        $config = $this->configure($defaults, $handlerStack);
+        $config = $this->createConfig($baseUri, $handlerStack);
+        $this->configure($config, $handlerStack);
         $this->http = $this->createClient($config, $handlerStack);
     }
 
 
-    protected function defaults(string $baseUri, HandlerStack $stack): array
+    protected function createConfig(string $baseUri, HandlerStack $stack): array
     {
         return [
             'handler' => $stack,
@@ -61,7 +61,7 @@ abstract class AbstractApiClient
      * @param HandlerStack $stack
      * @return array
      */
-    protected function configure(array & $config, HandlerStack $stack): array
+    protected function configure(array & $config, HandlerStack $stack): void
     {
     }
 
@@ -104,13 +104,10 @@ abstract class AbstractApiClient
         if ($actualType === $expectedType) {
             return;
         }
-        $actualHasCharset = strpos($expectedType, ';charset=') !== false;
-        $typeHasCharset = strpos($expectedType, ';charset=') !== false;
-        if (!$typeHasCharset && $actualHasCharset) {
-            $actualStripped = explode(';charset=', $actualType)[0];
-            if ($actualStripped === $expectedType) {
-                return;
-            }
+        $actual = explode('; charset=', $actualType);
+        $expected = explode('; charset=', $expectedType);
+        if (empty($expected[1]) && $expected[0] === $actual[0]) {
+            return;
         }
         $msg = sprintf('Expected response content type to be %s, got %s instead.', $expectedType, $actualType);
         throw new UnexpectedResponseException($msg, $response);
