@@ -95,7 +95,7 @@ abstract class AbstractApiClient
     }
 
 
-    protected function configureMiddleware(HandlerStack $stack, array $config):void
+    protected function configureMiddleware(HandlerStack $stack):void
     {
         $stack->push(function (callable $handler) {
             return new ServerMessageMiddleware($handler);
