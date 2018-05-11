@@ -1,0 +1,22 @@
+{
+    "name": "timostamm/json-client",
+    "description": "A simple web client for JSON APIs using Guzzle",
+    "type": "library",
+    "require": {
+        "php": ">=7.1",
+        "guzzlehttp/guzzle": "^6.3",
+        "symfony/serializer": "^4.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Timo Stamm",
+            "email": "ts@timostamm.de"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "TS\\Web\\JsonClient\\": "src/"
+        }
+    }
+}
