@@ -27,55 +27,38 @@ abstract class AbstractApiClient
     protected $defaults;
 
 
-    public function __construct(string $baseUri, SerializerInterface $serializer, callable $handler = null)
+    public function __construct(string $baseUri, SerializerInterface $serializer, callable $middleware = null, array $config = [])
     {
         $this->serializer = $serializer;
-        $handlerStack = $this->createHandlerStack($handler);
-        $config = $this->createConfig($baseUri, $handlerStack);
-        $this->configure($config, $handlerStack);
-        $this->http = $this->createClient($config, $handlerStack);
-    }
 
-
-    protected function createConfig(string $baseUri, HandlerStack $stack): array
-    {
-        return [
-            'handler' => $stack,
+        $config = array_replace([
             'base_uri' => $baseUri,
-            RequestOptions::ALLOW_REDIRECTS => false,
-            RequestOptions::TIMEOUT => 2.0,
-            RequestOptions::VERIFY => true,
-            RequestOptions::COOKIES => false,
             RequestOptions::HEADERS => [
                 'Accept-Encoding' => 'gzip',
                 'Accept' => 'application/json'
             ]
-        ];
+        ], $config);
+
+        if (empty($config['handler'])) {
+            $config['handler'] = HandlerStack::create();
+        }
+
+        if (! $config['handler'] instanceof HandlerStack) {
+            throw new \InvalidArgumentException('handler must be a HandlerStack');
+        }
+
+        $this->defaultMiddleware($config['handler']);
+
+        if ($middleware) {
+            $middleware( $config['handler'] );
+        }
+
+        $this->http = $this->createClient($config);
     }
 
 
-    /**
-     * Configure the client, set config options and middleware.
-     *
-     * @param array $config
-     * @param HandlerStack $stack
-     * @return array
-     */
-    protected function configure(array & $config, HandlerStack $stack): void
+    protected function defaultMiddleware(HandlerStack $stack):void
     {
-    }
-
-
-    protected function createClient(array $config): Client
-    {
-        return new Client($config);
-    }
-
-
-    protected function createHandlerStack(callable $handler = null): HandlerStack
-    {
-        $stack = HandlerStack::create($handler);
-
         $stack->push(function (callable $handler) {
             return new ServerMessageMiddleware($handler);
         }, 'error_message');
@@ -83,8 +66,12 @@ abstract class AbstractApiClient
         $stack->push(function (callable $handler) {
             return new SerializeRequestBodyMiddleware($handler, $this->serializer);
         }, 'serialize_request_body');
+    }
 
-        return $stack;
+
+    protected function createClient(array $config): Client
+    {
+        return new Client($config);
     }
 
 
