@@ -13,6 +13,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\OptionsResolver\Options;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Serializer\SerializerInterface;
 use TS\Web\JsonClient\Exception\UnexpectedResponseException;
 use TS\Web\JsonClient\Middleware\SerializeRequestBodyMiddleware;
@@ -22,42 +24,78 @@ use TS\Web\JsonClient\Middleware\ServerMessageMiddleware;
 abstract class AbstractApiClient
 {
 
-    private $serializer;
+
+    /** @var Client */
     protected $http;
-    protected $defaults;
+
+    /** @var SerializerInterface */
+    private $serializer;
 
 
-    public function __construct(string $baseUri, SerializerInterface $serializer, callable $middleware = null, array $config = [])
+    public function __construct(array $options = [], SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
 
-        $config = array_replace([
-            'base_uri' => $baseUri,
-            RequestOptions::HEADERS => [
-                'Accept-Encoding' => 'gzip',
-                'Accept' => 'application/json'
-            ]
-        ], $config);
+        $resolver = new OptionsResolver();
+        $this->configureOptions($resolver);
+        $config = $resolver->resolve($options);
 
-        if (empty($config['handler'])) {
-            $config['handler'] = HandlerStack::create();
-        }
-
-        if (! $config['handler'] instanceof HandlerStack) {
-            throw new \InvalidArgumentException('handler must be a HandlerStack');
-        }
-
-        $this->defaultMiddleware($config['handler']);
-
-        if ($middleware) {
-            $middleware( $config['handler'] );
-        }
-
+        $stack = $config['handler'];
+        $this->configureMiddleware($stack, $config);
         $this->http = $this->createClient($config);
     }
 
 
-    protected function defaultMiddleware(HandlerStack $stack):void
+    protected function configureOptions(OptionsResolver $resolver)
+    {
+        $resolver->setDefined(['base_uri', 'handler']);
+
+        $resolver->setDefault(RequestOptions::HEADERS, [
+            'Accept-Encoding' => 'gzip',
+            'Accept' => 'application/json'
+        ]);
+
+        $resolver->setAllowedTypes('base_uri', 'string');
+        $resolver->setDefault('handler', function(Options $options){
+            return HandlerStack::create();
+        });
+        $resolver->setAllowedTypes('handler', [HandlerStack::class]);
+
+        $resolver->setDefined([
+            RequestOptions::ALLOW_REDIRECTS,
+            RequestOptions::AUTH,
+            RequestOptions::BODY,
+            RequestOptions::CERT,
+            RequestOptions::COOKIES,
+            RequestOptions::CONNECT_TIMEOUT,
+            RequestOptions::DEBUG,
+            RequestOptions::DECODE_CONTENT,
+            RequestOptions::DELAY,
+            RequestOptions::EXPECT,
+            RequestOptions::FORM_PARAMS,
+            RequestOptions::HEADERS,
+            RequestOptions::HTTP_ERRORS,
+            RequestOptions::JSON,
+            RequestOptions::MULTIPART,
+            RequestOptions::ON_HEADERS,
+            RequestOptions::ON_STATS,
+            RequestOptions::PROGRESS,
+            RequestOptions::PROXY,
+            RequestOptions::QUERY,
+            RequestOptions::SINK,
+            RequestOptions::SYNCHRONOUS,
+            RequestOptions::SSL_KEY,
+            RequestOptions::STREAM,
+            RequestOptions::VERIFY,
+            RequestOptions::TIMEOUT,
+            RequestOptions::READ_TIMEOUT,
+            RequestOptions::VERSION,
+            RequestOptions::FORCE_IP_RESOLVE
+        ]);
+    }
+
+
+    protected function configureMiddleware(HandlerStack $stack, array $config):void
     {
         $stack->push(function (callable $handler) {
             return new ServerMessageMiddleware($handler);
