@@ -11,12 +11,6 @@ and write your methods, using the Guzzle Http Client to transmit.
 class MyClient extends AbstractApiClient {
     
     
-    protected function getBaseUri():string
-    {
-        return 'http://example.com/api/';
-    }
-    
-    
     /**
      * @throws ServerMessageException
      * @throws UnexpectedResponseException
