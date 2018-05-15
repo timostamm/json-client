@@ -105,18 +105,20 @@ abstract class AbstractApiClient
 
     protected function configureOptions(OptionsResolver $resolver)
     {
-        $resolver->setDefined(['base_uri', 'handler']);
-
-        $resolver->setDefault(RequestOptions::HEADERS, [
-            'Accept-Encoding' => 'gzip',
-            'Accept' => 'application/json'
+        $resolver->setDefaults([
+            'handler' => function (Options $options) {
+                return HandlerStack::create();
+            },
+            RequestOptions::HEADERS => [
+                'Accept-Encoding' => 'gzip',
+                'Accept' => 'application/json'
+            ]
         ]);
-
-        $resolver->setAllowedTypes('base_uri', 'string');
-        $resolver->setDefault('handler', function (Options $options) {
-            return HandlerStack::create();
-        });
+        $resolver->setDefined(['base_uri']);
         $resolver->setAllowedTypes('handler', [HandlerStack::class]);
+        $resolver->setAllowedTypes('base_uri', 'string');
+        $resolver->setAllowedTypes(RequestOptions::HEADERS, 'array');
+
 
         $resolver->setDefined([
             RequestOptions::ALLOW_REDIRECTS,

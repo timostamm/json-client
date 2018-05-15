@@ -19,5 +19,13 @@
         "psr-4": {
             "TS\\Web\\JsonClient\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TS\\Web\\JsonClient\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.1"
     }
 }
