@@ -9,6 +9,7 @@
 namespace TS\Web\JsonClient\Middleware;
 
 use GuzzleHttp\Promise\PromiseInterface;
+use function GuzzleHttp\Psr7\stream_for;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -59,6 +60,9 @@ class ServerMessageMiddleware
         }
 
         $body = $response->getBody()->getContents();
+
+        // restore response body
+        $response = $response->withBody(stream_for($body));
 
         try {
 
