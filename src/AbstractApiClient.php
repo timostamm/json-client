@@ -21,6 +21,63 @@ use TS\Web\JsonClient\Middleware\SerializeRequestBodyMiddleware;
 use TS\Web\JsonClient\Middleware\ServerMessageMiddleware;
 
 
+/**
+ *
+ * Transfer errors:
+ *
+ * Methods of this client may throw Guzzle exceptions,
+ * see http://docs.guzzlephp.org/en/stable/quickstart.html#exceptions
+ *
+ * If a networking error occurred or an HTTP response with
+ * status >= 400 is received, a GuzzleHttp\Exception\TransferException
+ * or child exception class is thrown.
+ *
+ * Guzzle exceptions should be used to catch transport
+ * exceptions like a request timeout, DNS error etc.
+ *
+ *
+ * Application errors:
+ *
+ * The server may send HTTP errors with a JSON body in
+ * order to send application error messages with a well
+ * defined structure.
+ *
+ * If the client detects a HTTP status >= 400 and a JSON
+ * content type, it tries to parse a json object in the
+ * following format:
+ * {
+ *   "message" : "mandatory string",
+ *   "details" : "optional string containing debugging information"
+ *   "request_id" : "optional string representing a log token"
+ * }
+ *
+ * Server application error messages are thrown as a
+ * TS\Web\JsonClient\Exception\ServerMessageException
+ *
+ * The message, details and request_id are available via
+ * getter-methods on the ServerMessageException object.
+ *
+ *
+ * Unexpected response errors:
+ *
+ * Client methods may parse the response. If the response
+ * content does not have the expected type or format, a
+ * TS\Web\JsonClient\Exception\UnexpectedResponseException
+ * is thrown. Exceptions of this type mean that the contract
+ * between server and client is broken and that code must be
+ * fixed on either side.
+ *
+ *
+ * Request payload errors:
+ *
+ * Client methods may take arguments and serialize them into
+ * JSON. This can result in an exception implementing
+ * Symfony\Component\Serializer\Exception\ExceptionInterface
+ * or another exception the client may choose to throw in this
+ * case, like an \InvalidArgumentException.
+ *
+ *
+ */
 abstract class AbstractApiClient
 {
 
@@ -56,7 +113,7 @@ abstract class AbstractApiClient
         ]);
 
         $resolver->setAllowedTypes('base_uri', 'string');
-        $resolver->setDefault('handler', function(Options $options){
+        $resolver->setDefault('handler', function (Options $options) {
             return HandlerStack::create();
         });
         $resolver->setAllowedTypes('handler', [HandlerStack::class]);
@@ -95,7 +152,7 @@ abstract class AbstractApiClient
     }
 
 
-    protected function configureMiddleware(HandlerStack $stack, array $options):void
+    protected function configureMiddleware(HandlerStack $stack, array $options): void
     {
         $stack->push(function (callable $handler) {
             return new ServerMessageMiddleware($handler);
