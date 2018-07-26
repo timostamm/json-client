@@ -44,6 +44,7 @@ class SerializeRequestBodyMiddleware
 
         $request = $request
             ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Content-Length', strlen($json))
             ->withBody($body);
 
         unset($options['data']);
