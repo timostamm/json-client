@@ -49,3 +49,14 @@ If you want more magic, have a look at [guzzle/command](https://github.com/guzzl
 
 The abstract base class just adds some middleware to automatically 
 serialize data and to detect server error messages in JSON format.
+
+
+#### Logging
+
+There is also middleware to log all HTTP requests (and corresponding 
+response or exception), see `HttpLoggingMiddleware` 
+
+An adapter for `Psr\Log\LoggerInterface` is available.
+
+This middleware is not added by default because the order is 
+important: The `HttpLoggingMiddleware` must be added last.
