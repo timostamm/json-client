@@ -209,10 +209,6 @@ abstract class AbstractApiClient
      */
     protected function deserializeResponse(ResponseInterface $response, string $type, array $context = [])
     {
-        $context = array_replace([
-            'allow_extra_attributes' => false
-        ], $context);
-
         $this->expectResponseType('application/json', $response);
         $data = $response->getBody()->getContents();
         try {
