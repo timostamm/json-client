@@ -28,7 +28,7 @@ class HttpPsrLogLogger implements HttpLoggerInterface
 
     public function __construct($psrLogger, string $prefix = null, string $logLevelSuccess = 'info', string $logLevelFailure = 'error', string $logLevelStart = null)
     {
-        if (get_class($psrLogger) !== self::PSR_LOGGER_INTERFACE) {
+        if (!is_subclass_of($psrLogger, self::PSR_LOGGER_INTERFACE, false)) {
             $msg = 'Expected psrLogger to implement ' . self::PSR_LOGGER_INTERFACE;
             throw new \InvalidArgumentException($msg);
         }
