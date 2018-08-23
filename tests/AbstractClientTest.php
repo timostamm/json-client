@@ -62,9 +62,7 @@ class AbstractClientTest extends TestCase
         $serializer = $this->createMock(SerializerInterface::class);
         $serializer->expects($this->once())
             ->method('deserialize')
-            ->with('placeholder-payload-json', Payload::class, 'json', [
-                'allow_extra_attributes' => false
-            ])
+            ->with('placeholder-payload-json', Payload::class, 'json', [])
             ->willThrowException(new \RuntimeException('serializer error'));
 
 
@@ -91,9 +89,7 @@ class AbstractClientTest extends TestCase
         $serializer = $this->createMock(SerializerInterface::class);
         $serializer->expects($this->once())
             ->method('deserialize')
-            ->with('placeholder-payload-json', Payload::class, 'json', [
-                'allow_extra_attributes' => false
-            ])
+            ->with('placeholder-payload-json', Payload::class, 'json')
             ->willReturn($payload);
 
 
