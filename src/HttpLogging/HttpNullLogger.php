@@ -33,12 +33,12 @@ class HttpNullLogger implements HttpLoggerInterface
     }
 
 
-    public function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions): void
+    public function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions, float $transferTimeSeconds): void
     {
     }
 
 
-    public function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions): void
+    public function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions, float $transferTimeSeconds): void
     {
     }
 

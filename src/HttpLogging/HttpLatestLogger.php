@@ -49,13 +49,13 @@ class HttpLatestLogger implements HttpLoggerInterface
     }
 
 
-    public function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions): void
+    public function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions, float $transferTimeSeconds): void
     {
         $this->latest = new HttpClientSuccess($request, $response, $requestOptions);
     }
 
 
-    public function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions): void
+    public function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions, float $transferTimeSeconds): void
     {
         $this->latest = new HttpClientFailure($request, $response, $reason, $requestOptions);
     }

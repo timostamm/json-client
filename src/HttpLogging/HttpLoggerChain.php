@@ -39,18 +39,18 @@ class HttpLoggerChain implements HttpLoggerInterface
     }
 
 
-    public function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions): void
+    public function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions, float $transferTimeSeconds): void
     {
         foreach ($this->loggers as $logger) {
-            $logger->logSuccess($request, $response, $requestOptions);
+            $logger->logSuccess($request, $response, $requestOptions, $transferTimeSeconds);
         }
     }
 
 
-    public function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions): void
+    public function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions, float $transferTimeSeconds): void
     {
         foreach ($this->loggers as $logger) {
-            $logger->logFailure($request, $response, $reason, $requestOptions);
+            $logger->logFailure($request, $response, $reason, $requestOptions, $transferTimeSeconds);
         }
     }
 

@@ -21,31 +21,31 @@ class HttpLoggingMiddleware
 {
 
     const REQUEST_OPTION_LOGGER = 'logger';
-    const REQUEST_OPTION_REQUEST_ID_HEADER = 'request_id_header';
 
 
     public function __invoke($handler)
     {
+
         return function (RequestInterface $request, array $options) use ($handler) {
 
+            $transferStart = -microtime(true);
             $logger = $options[self::REQUEST_OPTION_LOGGER] ?? HttpNullLogger::getInstance();
-
             $request = $logger->logStart($request, $options);
 
             /** @var PromiseInterface $promise */
             $promise = $handler($request, $options);
 
-            return $promise->then(function (ResponseInterface $response) use ($request, $options, $logger) {
+            return $promise->then(function (ResponseInterface $response) use ($request, $options, $logger, $transferStart) {
 
-                $logger->logSuccess($request, $response, $options);
-
+                $transferTimeSeconds = $transferStart + microtime(true);
+                $logger->logSuccess($request, $response, $options, $transferTimeSeconds);
                 return $response;
 
-            }, function (\Throwable $reason) use ($request, $options, $logger) {
+            }, function (\Throwable $reason) use ($request, $options, $logger, $transferStart) {
 
                 $response = $reason instanceof RequestException ? $reason->getResponse() : null;
-
-                $logger->logFailure($request, $response, $reason, $options);
+                $transferTimeSeconds = $transferStart + microtime(true);
+                $logger->logFailure($request, $response, $reason, $options, $transferTimeSeconds);
 
                 return rejection_for($reason);
             });

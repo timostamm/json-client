@@ -17,9 +17,9 @@ interface HttpLoggerInterface
 
     function logStart(RequestInterface $request, array $requestOptions): RequestInterface;
 
-    function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions): void;
+    function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions, float $transferTimeSeconds): void;
 
-    function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions): void;
+    function logFailure(RequestInterface $request, ?ResponseInterface $response, \Throwable $reason, array $requestOptions, float $transferTimeSeconds): void;
 
 
 }
