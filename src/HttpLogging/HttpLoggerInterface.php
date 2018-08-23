@@ -15,7 +15,7 @@ use Psr\Http\Message\ResponseInterface;
 interface HttpLoggerInterface
 {
 
-    function logStart(RequestInterface $request, array $requestOptions): void;
+    function logStart(RequestInterface $request, array $requestOptions): RequestInterface;
 
     function logSuccess(RequestInterface $request, ResponseInterface $response, array $requestOptions): void;
 

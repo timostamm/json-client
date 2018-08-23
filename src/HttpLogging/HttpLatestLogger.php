@@ -42,9 +42,10 @@ class HttpLatestLogger implements HttpLoggerInterface
     }
 
 
-    public function logStart(RequestInterface $request, array $requestOptions): void
+    public function logStart(RequestInterface $request, array $requestOptions): RequestInterface
     {
         $this->latest = null;
+        return $request;
     }
 
 

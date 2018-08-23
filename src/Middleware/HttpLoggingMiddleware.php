@@ -21,6 +21,7 @@ class HttpLoggingMiddleware
 {
 
     const REQUEST_OPTION_LOGGER = 'logger';
+    const REQUEST_OPTION_REQUEST_ID_HEADER = 'request_id_header';
 
 
     public function __invoke($handler)
@@ -29,7 +30,7 @@ class HttpLoggingMiddleware
 
             $logger = $options[self::REQUEST_OPTION_LOGGER] ?? HttpNullLogger::getInstance();
 
-            $logger->logStart($request, $options);
+            $request = $logger->logStart($request, $options);
 
             /** @var PromiseInterface $promise */
             $promise = $handler($request, $options);

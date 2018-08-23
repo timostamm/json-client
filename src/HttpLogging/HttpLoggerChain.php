@@ -30,11 +30,12 @@ class HttpLoggerChain implements HttpLoggerInterface
         $this->loggers[] = $logger;
     }
 
-    public function logStart(RequestInterface $request, array $requestOptions): void
+    public function logStart(RequestInterface $request, array $requestOptions): RequestInterface
     {
         foreach ($this->loggers as $logger) {
-            $logger->logStart($request, $requestOptions);
+            $request = $logger->logStart($request, $requestOptions);
         }
+        return $request;
     }
 
 

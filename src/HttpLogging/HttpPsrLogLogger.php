@@ -40,10 +40,10 @@ class HttpPsrLogLogger implements HttpLoggerInterface
     }
 
 
-    public function logStart(RequestInterface $request, array $requestOptions): void
+    public function logStart(RequestInterface $request, array $requestOptions): RequestInterface
     {
         if (is_null($this->logLevelStart)) {
-            return;
+            return $request;
         }
 
         $message = $this->buildRequestString($request);
@@ -52,6 +52,7 @@ class HttpPsrLogLogger implements HttpLoggerInterface
             'request' => $request,
             'request_options' => $requestOptions
         ]);
+        return $request;
     }
 
 

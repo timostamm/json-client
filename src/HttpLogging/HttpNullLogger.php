@@ -27,8 +27,9 @@ class HttpNullLogger implements HttpLoggerInterface
     }
 
 
-    public function logStart(RequestInterface $request, array $requestOptions): void
+    public function logStart(RequestInterface $request, array $requestOptions): RequestInterface
     {
+        return $request;
     }
 
 
