@@ -9,15 +9,15 @@
 namespace TS\Web\JsonClient;
 
 
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\RequestOptions;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
-use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 use Symfony\Component\Serializer\SerializerInterface;
 use TS\Web\JsonClient\Exception\ServerMessageException;
 use TS\Web\JsonClient\Exception\UnexpectedResponseException;
@@ -29,23 +29,38 @@ use function GuzzleHttp\Psr7\stream_for;
 class AbstractClientTest extends TestCase
 {
 
+    /** @var TestClient */
+    protected $client;
 
+    /** @var MockHandler */
+    protected $mockHandler;
+
+    /** @var HandlerStack */
+    protected $handlerStack;
+
+    /** @var MockObject | SerializerInterface */
+    protected $serializer;
+
+
+    protected function setUp()
+    {
+        $this->serializer = $this->createMock(SerializerInterface::class);
+        $this->mockHandler = new MockHandler();
+        $this->handlerStack = HandlerStack::create($this->mockHandler);
+        $this->client = new TestClient([
+            'handler' => $this->handlerStack,
+            'base_uri' => 'http://localhost',
+        ], $this->serializer);
+    }
 
 
     public function testAcceptHeaderSent()
     {
         $history = [];
-        $mock = new MockHandler([
-            new Response(200, ['Content-Type' => 'application/json'], stream_for('{"message":"Hello"}')),
-        ]);
-        $stack = HandlerStack::create($mock);
-        $client = new TestClient([
-            'handler' => $stack,
-            'base_uri' => 'http://localhost',
-        ], $this->createMock(SerializerInterface::class));
-        $stack->push(Middleware::history($history));
+        $this->handlerStack->push(Middleware::history($history));
+        $this->mockHandler->append(new Response(200, ['Content-Type' => 'application/json'], stream_for('{"message":"Hello"}')));
 
-        $client->getBodyString();
+        $this->client->getBodyString();
 
         /** @var RequestInterface $request */
         $request = $history[0]['request'];
@@ -55,29 +70,20 @@ class AbstractClientTest extends TestCase
     }
 
 
-
-
     public function testDeserializeResponseExceptionThrowsUnexpectedResponseException()
     {
-        $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->once())
+        $this->serializer->expects($this->once())
             ->method('deserialize')
             ->with('placeholder-payload-json', Payload::class, 'json', [])
             ->willThrowException(new \RuntimeException('serializer error'));
 
-
-        $stack = HandlerStack::create(new MockHandler([
-            new Response(200, ['Content-Type' => 'application/json'], stream_for('placeholder-payload-json')),
-        ]));
-        $client = new TestClient([
-            'handler' => $stack,
-            'base_uri' => 'http://localhost',
-        ], $serializer);
-
+        $this->mockHandler->append(
+            new Response(200, ['Content-Type' => 'application/json'], stream_for('placeholder-payload-json'))
+        );
 
         $this->expectException(UnexpectedResponseException::class);
         $this->expectExceptionMessage('Failed to deserialize response body to type TS\Web\JsonClient\Fixtures\Payload: serializer error');
-        $client->getPayload();
+        $this->client->getPayload();
 
     }
 
@@ -86,58 +92,55 @@ class AbstractClientTest extends TestCase
     {
         $payload = new Payload('str', 123);
 
-        $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->once())
+        $this->serializer->expects($this->once())
             ->method('deserialize')
             ->with('placeholder-payload-json', Payload::class, 'json')
             ->willReturn($payload);
 
+        $this->mockHandler->append(
+            new Response(200, ['Content-Type' => 'application/json'], stream_for('placeholder-payload-json'))
+        );
 
-        $stack = HandlerStack::create(new MockHandler([
-            new Response(200, ['Content-Type' => 'application/json'], stream_for('placeholder-payload-json')),
-        ]));
-        $client = new TestClient([
-            'handler' => $stack,
-            'base_uri' => 'http://localhost',
-        ], $serializer);
-
-
-        $result = $client->getPayload();
+        $result = $this->client->getPayload();
         $this->assertSame($payload, $result);
-
     }
 
 
     public function testUnexpectedResponseType()
     {
-        $stack = HandlerStack::create(new MockHandler([
-            new Response(200, ['Content-Type' => 'text/html']),
-        ]));
-        $client = new TestClient([
-            'handler' => $stack,
-            'base_uri' => 'http://localhost',
-        ], $this->createMock(SerializerInterface::class));
+        $this->mockHandler->append(
+            new Response(200, ['Content-Type' => 'text/html'])
+        );
 
         $this->expectException(UnexpectedResponseException::class);
         $this->expectExceptionMessage('Expected response content type to be application/json, got text/html instead.');
-        $client->getJsonResponse();
+        $this->client->getJsonResponse();
     }
 
 
-    public function testExpectedResponseType()
+    public function testExpectType()
     {
-        $stack = HandlerStack::create(new MockHandler([
-            new Response(200, ['Content-Type' => 'application/json']),
-        ]));
-        $client = new TestClient([
-            'handler' => $stack,
-            'base_uri' => 'http://localhost',
-        ], $this->createMock(SerializerInterface::class));
-        $history = [];
-        $stack->push(Middleware::history($history));
+        $this->mockHandler->append(
+            new Response(200, ['Content-Type' => 'application/json'])
+        );
 
-        $client->getJsonResponse();
+        $history = [];
+        $this->handlerStack->push(Middleware::history($history));
+
+        $this->client->getJsonResponse();
         $this->assertCount(1, $history);
+    }
+
+
+    public function test_HttpErrors_Before_ExpectType()
+    {
+        $this->mockHandler->append(
+            new Response(404)
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('Client error: `GET http://localhost/json-response` resulted in a `404 Not Found` response');
+        $this->client->getJsonResponse();
     }
 
 
@@ -145,26 +148,19 @@ class AbstractClientTest extends TestCase
     {
         $payload = new Payload('str', 123);
 
-        $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->once())
+        $this->serializer->expects($this->once())
             ->method('serialize')
             ->with($payload, 'json', [])
             ->willReturn('placeholder-payload-json');
 
 
-        $stack = HandlerStack::create(new MockHandler([
-            new Response(200),
-        ]));
-        $client = new TestClient([
-            'handler' => $stack,
-            'base_uri' => 'http://localhost',
-        ], $serializer);
         $history = [];
-        $stack->push(Middleware::history($history));
+        $this->handlerStack->push(Middleware::history($history));
+        $this->mockHandler->append(
+            new Response(200)
+        );
 
-
-        $client->sendPayload($payload);
-
+        $this->client->sendPayload($payload);
 
         /** @var RequestInterface $request */
         $request = $history[0]['request'];
@@ -174,16 +170,25 @@ class AbstractClientTest extends TestCase
     }
 
 
-
-
     public function testConnectException()
     {
         $client = new TestClient([
             'base_uri' => 'http://this-domain-should-not-be-registered-98452237681120.com'
-        ], $this->createMock(SerializerInterface::class));
+        ], $this->serializer);
 
         $this->expectException(ConnectException::class);
         $client->getBodyString();
+    }
+
+
+    public function testHttpErrors()
+    {
+        $this->mockHandler->append(
+            new Response(404, [], 'not found')
+        );
+
+        $this->expectException(ClientException::class);
+        $this->client->getBodyString();
     }
 
 
@@ -192,22 +197,19 @@ class AbstractClientTest extends TestCase
      */
     public function testServerMessageException(int $responseStatus, string $responseBody, string $erroMessage)
     {
-        $mock = new MockHandler([
+        $this->mockHandler->append(
             new Response(
                 $responseStatus,
                 ['Content-Type' => 'application/json'],
                 stream_for($responseBody)
-            ),
-        ]);
-        $client = new TestClient([
-            'handler' => HandlerStack::create($mock),
-            'base_uri' => 'http://localhost'
-        ], $this->createMock(SerializerInterface::class));
+            )
+        );
 
         $this->expectException(ServerMessageException::class);
         $this->expectExceptionMessage($erroMessage);
-        $client->getBodyString();
+        $this->client->getBodyString();
     }
+
 
     public function provideServerErrorMessages()
     {
@@ -215,69 +217,6 @@ class AbstractClientTest extends TestCase
         yield [503, '{"message":"An error message from the server."}', 'An error message from the server.'];
         yield [403, '{"message":"An error message from the server."}', 'An error message from the server.'];
         yield [403, '{"message":"An error message from the server."}', 'An error message from the server.'];
-    }
-
-
-
-    public function testNoOptionRequired()
-    {
-        $options = [];
-        $this->getMockForAbstractClass(AbstractApiClient::class, [
-            $options, $this->createMock(SerializerInterface::class)
-        ]);
-        $this->assertTrue(true);
-    }
-
-
-    /**
-     * @dataProvider provideDefinedOptions
-     */
-    public function testDefinedOptions(string $optionName, $value)
-    {
-        $options = [
-            $optionName => $value
-        ];
-        $this->getMockForAbstractClass(AbstractApiClient::class, [
-            $options, $this->createMock(SerializerInterface::class)
-        ]);
-        $this->assertTrue(true);
-    }
-
-    public function provideDefinedOptions()
-    {
-        $class = new \ReflectionClass(RequestOptions::class);
-        foreach ($class->getConstants() as $constant) {
-            $value = 'test';
-            if ($constant === RequestOptions::HEADERS) {
-                $value = [];
-            }
-            yield [ $constant, $value ];
-        }
-    }
-
-
-    /**
-     * @dataProvider provideInvalidOptions
-     */
-    public function testAllowedOptionTypes(array $options)
-    {
-        $this->expectException(InvalidOptionsException::class);
-        $this->getMockForAbstractClass(AbstractApiClient::class, [
-            $options, $this->createMock(SerializerInterface::class)
-        ]);
-    }
-
-    public function provideInvalidOptions()
-    {
-        yield[[
-            'base_uri' => 123
-        ]];
-        yield[[
-            'handler' => 123
-        ]];
-        yield[[
-            RequestOptions::HEADERS => 123
-        ]];
     }
 
 }

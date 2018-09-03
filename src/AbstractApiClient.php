@@ -12,11 +12,11 @@ namespace TS\Web\JsonClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
-use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Serializer\SerializerInterface;
-use TS\Web\JsonClient\Exception\UnexpectedResponseException;
+use TS\Web\JsonClient\Middleware\DeserializeResponseMiddleware;
+use TS\Web\JsonClient\Middleware\ResponseExpectationMiddleware;
 use TS\Web\JsonClient\Middleware\SerializeRequestBodyMiddleware;
 use TS\Web\JsonClient\Middleware\ServerMessageMiddleware;
 
@@ -156,72 +156,27 @@ abstract class AbstractApiClient
 
     protected function configureMiddleware(HandlerStack $stack, array $options): void
     {
-        $stack->push(function (callable $handler) {
-            return new ServerMessageMiddleware($handler);
-        }, 'error_message');
+        $stack->before('http_errors', function (callable $handler) {
+            return new ResponseExpectationMiddleware($handler);
+        }, 'expect_response');
+
+        $stack->after('expect_response', function (callable $handler) {
+            return new DeserializeResponseMiddleware($handler, $this->serializer);
+        }, 'deserialize_response');
 
         $stack->push(function (callable $handler) {
             return new SerializeRequestBodyMiddleware($handler, $this->serializer);
         }, 'serialize_request_body');
+
+        $stack->push(function (callable $handler) {
+            return new ServerMessageMiddleware($handler);
+        }, 'error_message');
     }
 
 
     protected function createClient(array $config): Client
     {
         return new Client($config);
-    }
-
-
-    /**
-     * Ensure that the response has the expected content type.
-     * If the expected type contains a charset, it must match.
-     * If the expected type does not contain a charset, the
-     * charset is ignored when matching the type.
-     *
-     * @param string $expectedType
-     * @param ResponseInterface $response
-     * @throw UnexpectedResponseException if the response content type does not match
-     */
-    protected function expectResponseType(string $expectedType, ResponseInterface $response): void
-    {
-        $actualType = $response->getHeaderLine('Content-Type');
-        if ($actualType === $expectedType) {
-            return;
-        }
-        $actual = explode('; charset=', $actualType);
-        $expected = explode('; charset=', $expectedType);
-        if (empty($expected[1]) && $expected[0] === $actual[0]) {
-            return;
-        }
-        $msg = sprintf('Expected response content type to be %s, got %s instead.', $expectedType, $actualType);
-        throw new UnexpectedResponseException($msg, $response);
-    }
-
-
-    /**
-     * Deserialize the request body into the given type.
-     *
-     * @param ResponseInterface $response
-     * @param string $type
-     * @param array $context
-     * @return mixed
-     * @throws UnexpectedResponseException if the response is not application/json or deserialization failed
-     */
-    protected function deserializeResponse(ResponseInterface $response, string $type, array $context = [])
-    {
-        $this->expectResponseType('application/json', $response);
-        $data = $response->getBody()->getContents();
-        try {
-
-            $object = $this->serializer
-                ->deserialize($data, $type, 'json', $context);
-
-            return $object;
-
-        } catch (\Exception $exception) {
-            $msg = sprintf('Failed to deserialize response body to type %s: %s', $type, $exception->getMessage());
-            throw new UnexpectedResponseException($msg, $response, $exception);
-        }
     }
 
 

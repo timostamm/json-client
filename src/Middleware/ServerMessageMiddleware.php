@@ -9,15 +9,24 @@
 namespace TS\Web\JsonClient\Middleware;
 
 use GuzzleHttp\Promise\PromiseInterface;
-use function GuzzleHttp\Psr7\stream_for;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use function GuzzleHttp\json_decode;
 use TS\Web\JsonClient\Exception\ServerMessageException;
 use TS\Web\JsonClient\Exception\UnexpectedResponseException;
+use function GuzzleHttp\json_decode;
+use function GuzzleHttp\Psr7\stream_for;
 
 
+/**
+ * This middleware intercepts all responses with status
+ * code >= 400 with content type application/json.
+ *
+ * It decodes the JSON body and throws a
+ * ServerMessageException with a message and optionally
+ * a details string and a request id.
+ *
+ */
 class ServerMessageMiddleware
 {
 

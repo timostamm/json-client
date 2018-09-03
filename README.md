@@ -3,7 +3,7 @@
 A simple client for JSON APIs using Guzzle and the Symfony 
 Serializer.
 
-To implement a API client, you would extend AbstractApiClient 
+To implement a API client, you can extend AbstractApiClient 
 and write your methods, using the Guzzle Http Client to transmit.
 
 
@@ -12,8 +12,6 @@ class MyClient extends AbstractApiClient {
     
     
     /**
-     * @throws ServerMessageException
-     * @throws UnexpectedResponseException
      * @throws TransferException
      */
     public function send(Model $model):void
@@ -28,27 +26,42 @@ class MyClient extends AbstractApiClient {
     
     /**
      * @param int $id
-     * @throws ServerMessageException
-     * @throws UnexpectedResponseException
      * @throws TransferException
      * @returns Model 
      */
     public function get(int $id):Model
     {
-        $response = $this->http->get('model/'.$id);
-        return $this->deserializeResponse($response, Model::class);
+        return $this->http->get('model/'.$id, [
+            'deserialize_to' => Model::class
+        ]);
     }
 
 
 }
 ```
 
-So the implementation is up to you. 
+All functionality is implemented as middleware, the 
+`AbstractApiClient` just configures the Guzzle `HandlerStack` for you. 
 
-If you want more magic, have a look at [guzzle/command](https://github.com/guzzle/command).
 
-The abstract base class just adds some middleware to automatically 
-serialize data and to detect server error messages in JSON format.
+
+### Provided middleware 
+
+
+#### Serialization
+
+See `DeserializeResponseMiddleware` and `SerializeRequestBodyMiddleware`.
+
+
+#### Server error messages
+
+`ServerMessageMiddleware` provides support for JSON error messages. 
+
+
+#### Response expectations
+
+If you want to make sure that a response has a specific header, content 
+type or other feature, use `ResponseExpectationMiddleware`. 
 
 
 #### Logging

@@ -17,6 +17,18 @@ use TS\Web\JsonClient\HttpLogging\HttpNullLogger;
 use function GuzzleHttp\Promise\rejection_for;
 
 
+/**
+ *
+ * This middleware delegates logging to a HttpLoggerInterface
+ * implementation.
+ *
+ * It logs the start, resolution and rejection of a request
+ * and includes the request and response objects.
+ *
+ * See implementations of HttpLoggerInterface in the namespace
+ * TS\Web\JsonClient\HttpLogging
+ *
+ */
 class HttpLoggingMiddleware
 {
 

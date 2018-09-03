@@ -10,6 +10,7 @@ namespace TS\Web\JsonClient\Fixtures;
 
 
 use TS\Web\JsonClient\AbstractApiClient;
+use TS\Web\JsonClient\Exception\ResponseExpector;
 
 class TestClient extends AbstractApiClient
 {
@@ -31,15 +32,19 @@ class TestClient extends AbstractApiClient
 
     public function getJsonResponse(): void
     {
-        $response = $this->http->get('json-response');
-        $this->expectResponseType('application/json', $response);
+        $this->http->get('json-response', [
+            'expect_response' => function (ResponseExpector $expectation) {
+                $expectation->expectType('application/json');
+            }
+        ]);
     }
 
 
     public function getPayload(): Payload
     {
-        $response = $this->http->get('get-payload');
-        return $this->deserializeResponse($response, Payload::class);
+        return $this->http->get('get-payload', [
+            'deserialize_to' => Payload::class
+        ]);
     }
 
 
