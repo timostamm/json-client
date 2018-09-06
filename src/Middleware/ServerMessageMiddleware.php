@@ -79,7 +79,7 @@ class ServerMessageMiddleware
 
         } catch (\InvalidArgumentException $exception) {
             $msg = 'Failed to decode json response: ' . $exception->getMessage();
-            throw new UnexpectedResponseException($msg, $response, $exception);
+            throw new UnexpectedResponseException($msg, $request, $response, $exception);
         }
 
         if (!array_key_exists('message', $json)) {
