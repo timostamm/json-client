@@ -1,5 +1,8 @@
 # json-client
 
+[![Build Status](https://api.travis-ci.org/timostamm/json-client.png)](https://travis-ci.org/timostamm/json-client)
+
+
 A simple client for JSON APIs using Guzzle and the Symfony 
 Serializer.
 
