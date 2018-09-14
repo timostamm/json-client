@@ -16,7 +16,7 @@ interface HttpLoggerInterface
 {
 
     /**
-     * @deprecated Modifying the response can lead to unexpected result because of required middleware order for logging. Method will be removed in next release.
+     * @deprecated Modifying the response can lead to unexpected result because of required middleware order for logging. Method will be removed.
      *
      * @param RequestInterface $request
      * @param array $requestOptions
