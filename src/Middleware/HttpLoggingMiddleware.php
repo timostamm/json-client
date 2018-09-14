@@ -42,6 +42,8 @@ class HttpLoggingMiddleware
 
             $transferStart = -microtime(true);
             $logger = $options[self::REQUEST_OPTION_LOGGER] ?? HttpNullLogger::getInstance();
+
+            // TODO remove
             $request = $logger->logStart($request, $options);
 
             /** @var PromiseInterface $promise */
