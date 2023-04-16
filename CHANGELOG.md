@@ -1,0 +1,3 @@
+- Drop PHP 7.1 support
+- Add PHP 8 support
+- Change AbstractApiClient constructor signature
