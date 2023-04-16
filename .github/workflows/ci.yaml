@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} tests (${{ matrix.description }})
+    name: PHP ${{ matrix.php }} tests
     runs-on: ubuntu-latest
 
     strategy:
