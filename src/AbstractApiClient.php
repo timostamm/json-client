@@ -134,7 +134,6 @@ abstract class AbstractApiClient
             RequestOptions::FORM_PARAMS,
             RequestOptions::HEADERS,
             RequestOptions::HTTP_ERRORS,
-            RequestOptions::IDN_CONVERSION,
             RequestOptions::JSON,
             RequestOptions::MULTIPART,
             RequestOptions::ON_HEADERS,
@@ -152,6 +151,13 @@ abstract class AbstractApiClient
             RequestOptions::VERSION,
             RequestOptions::FORCE_IP_RESOLVE
         ]);
+
+        $version = \Composer\InstalledVersions::getVersion('guzzlehttp/guzzle');
+        if (version_compare($version, '6.5.0', '>=')) {
+            $resolver->setDefined([
+                RequestOptions::IDN_CONVERSION
+            ]);
+        }
     }
 
 
