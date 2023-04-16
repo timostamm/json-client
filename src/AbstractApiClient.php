@@ -89,7 +89,7 @@ abstract class AbstractApiClient
     private $serializer;
 
 
-    public function __construct(array $options = [], SerializerInterface $serializer)
+    public function __construct(?array $options = [], SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
 
