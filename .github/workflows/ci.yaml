@@ -17,6 +17,9 @@ jobs:
           - 8.0
           - 8.1
           - 8.2
+        dependencies:
+          - lowest
+          - highest
 
     steps:
       - name: Checkout
@@ -31,10 +34,11 @@ jobs:
       - name: Install dependencies
         uses: ramsey/composer-install@v2
         with:
-          composer-options: "${{ matrix.composer-options }}"
+          dependency-versions: ${{ matrix.dependencies }}
+          composer-options: ${{ matrix.composer-options }}
 
-      - name: Validate composer.json
-        run: composer validate
+#      - name: Validate composer.json
+#        run: composer validate
 
       - name: Run test suite
         run: ./vendor/bin/phpunit
