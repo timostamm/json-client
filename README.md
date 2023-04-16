@@ -1,7 +1,9 @@
 # json-client
 
-[![Build Status](https://api.travis-ci.org/timostamm/json-client.png)](https://travis-ci.org/timostamm/json-client)
-
+[![build](https://github.com/timostamm/json-client/workflows/CI/badge.svg)](https://github.com/timostamm/json-client/actions?query=workflow:"CI")
+![Packagist PHP Version](https://img.shields.io/packagist/dependency-v/timostamm/json-client/php)
+[![GitHub tag](https://img.shields.io/github/tag/timostamm/json-client?include_prereleases=&sort=semver&color=blue)](https://github.com/timostamm/json-client/releases/)
+[![License](https://img.shields.io/badge/License-MIT-blue)](#license)
 
 A simple client for JSON APIs using Guzzle and the Symfony 
 Serializer.
