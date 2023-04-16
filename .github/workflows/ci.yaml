@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} tests
+    name: PHP ${{ matrix.php-version }} tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -35,4 +35,4 @@ jobs:
         run: composer install
 
       - name: Run test suite
-        run: ./vendor/bin/simple-phpunit
+        run: ./vendor/bin/phpunit
