@@ -134,6 +134,7 @@ abstract class AbstractApiClient
             RequestOptions::FORM_PARAMS,
             RequestOptions::HEADERS,
             RequestOptions::HTTP_ERRORS,
+            RequestOptions::IDN_CONVERSION,
             RequestOptions::JSON,
             RequestOptions::MULTIPART,
             RequestOptions::ON_HEADERS,
