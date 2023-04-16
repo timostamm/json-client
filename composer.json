@@ -3,7 +3,7 @@
     "description": "A simple client for JSON APIs using Guzzle and the Symfony Serializer.",
     "type": "library",
     "require": {
-        "php": ">=7.1",
+        "php": ">=7.2",
         "guzzlehttp/guzzle": "^6.3",
         "symfony/serializer": "^4.0",
         "symfony/options-resolver": "^4.0"
