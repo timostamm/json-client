@@ -89,7 +89,7 @@ abstract class AbstractApiClient
     private $serializer;
 
 
-    public function __construct(array $options = [], SerializerInterface $serializer)
+    public function __construct(array $options, SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
 
@@ -151,6 +151,13 @@ abstract class AbstractApiClient
             RequestOptions::VERSION,
             RequestOptions::FORCE_IP_RESOLVE
         ]);
+
+        $version = \Composer\InstalledVersions::getVersion('guzzlehttp/guzzle');
+        if (version_compare($version, '6.5.0', '>=')) {
+            $resolver->setDefined([
+                RequestOptions::IDN_CONVERSION
+            ]);
+        }
     }
 
 

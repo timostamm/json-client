@@ -24,7 +24,7 @@ class ClientOptionsTest extends TestCase
     protected $serializer;
 
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->serializer = $this->createMock(SerializerInterface::class);
     }
