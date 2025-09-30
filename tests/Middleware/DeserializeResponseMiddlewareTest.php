@@ -35,7 +35,7 @@ class DeserializeResponseMiddlewareTest extends TestCase
         $payload = new Payload('test', 1);
         $this->serializer->expects($this->once())
             ->method('deserialize')
-            ->with('{"id": 1, "name": "test"}', Payload::class)
+            ->with('{"id": 1, "name": "test"}', Payload::class, 'json')
             ->willReturn($payload);
 
         $request = $this->createMock(\Psr\Http\Message\RequestInterface::class);
@@ -46,6 +46,28 @@ class DeserializeResponseMiddlewareTest extends TestCase
 
         $promise = $this->middleware->__invoke($request, $options);
         $response = $promise->wait();
+        $this->assertInstanceOf(DeserializedResponse::class, $response);
+
+        $this->assertSame($payload, $response->getDeserializedData());
+    }
+
+    public function testSuccessfulDeserializationToArray()
+    {
+        $payload = [new Payload('test', 1), new Payload('test', 2), new Payload('test', 3)];
+        $this->serializer->expects($this->once())
+            ->method('deserialize')
+            ->with('{"id": 1, "name": "test"}', Payload::class . '[]', 'json')
+            ->willReturn($payload);
+
+        $request = $this->createMock(\Psr\Http\Message\RequestInterface::class);
+        $request->method('getBody')
+            ->willReturn(Utils::streamFor(''));
+
+        $options = ['deserialize_to' => Payload::class . '[]'];
+
+        $promise = $this->middleware->__invoke($request, $options);
+        $response = $promise->wait();
+
         $this->assertInstanceOf(DeserializedResponse::class, $response);
 
         $this->assertSame($payload, $response->getDeserializedData());

@@ -8,11 +8,11 @@ use Psr\Http\Message\StreamInterface;
 
 class DeserializedResponse implements ResponseInterface
 {
-    public function __construct(private ResponseInterface $response, private object $data)
+    public function __construct(private ResponseInterface $response, private object|array $data)
     {
     }
 
-    public function getDeserializedData(): object
+    public function getDeserializedData(): object|array
     {
         return $this->data;
     }

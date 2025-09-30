@@ -9,6 +9,7 @@
 namespace TS\Web\JsonClient\Fixtures;
 
 
+use GuzzleHttp\Exception\GuzzleException;
 use TS\Web\JsonClient\AbstractApiClient;
 use TS\Web\JsonClient\Exception\ResponseExpector;
 use TS\Web\JsonClient\HttpMessage\DeserializedResponse;
@@ -45,6 +46,24 @@ class TestClient extends AbstractApiClient
     {
         $response = $this->http->get('get-payload', [
             'deserialize_to' => Payload::class
+        ]);
+
+        if (!$response instanceof DeserializedResponse) {
+            throw new \RuntimeException('Expected a DeserializedResponse, got: '.get_class($response));
+        }
+
+        return $response->getDeserializedData();
+    }
+
+
+    /**
+     * @return Payload[]
+     * @throws GuzzleException
+     */
+    public function getPayloadArray(): array
+    {
+        $response = $this->http->get('get-payload-array', [
+            'deserialize_to' => Payload::class . '[]'
         ]);
 
         if (!$response instanceof DeserializedResponse) {

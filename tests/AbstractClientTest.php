@@ -106,6 +106,24 @@ class AbstractClientTest extends TestCase
     }
 
 
+    public function testDeserializeArrayResponse()
+    {
+        $payload = [new Payload('str', 1), new Payload('str', 2), new Payload('str', 3)];
+
+        $this->serializer->expects($this->once())
+            ->method('deserialize')
+            ->with('placeholder-payload-json', (string) Payload::class . '[]', 'json')
+            ->willReturn($payload);
+
+        $this->mockHandler->append(
+            new Response(200, ['Content-Type' => 'application/json'], Utils::streamFor('placeholder-payload-json'))
+        );
+
+        $result = $this->client->getPayloadArray();
+        $this->assertSame($payload, $result);
+    }
+
+
     public function testUnexpectedResponseType()
     {
         $this->mockHandler->append(
